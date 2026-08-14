@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-ink-50 text-ink-900 antialiased dark:bg-ink-950 dark:text-ink-50;
+}
+
+::selection {
+  background: rgba(38, 80, 232, 0.18);
+}
+
+a,
+button {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 200ms;
+}
+
+*:focus-visible {
+  outline: 2px solid theme("colors.accent.500");
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------- */
+/* Tiptap / ProseMirror editor content styling                */
+/* ---------------------------------------------------------- */
+
+.editor-prose {
+  @apply prose prose-lg max-w-none prose-headings:font-semibold prose-headings:tracking-tight
+    prose-h1:text-4xl prose-h2:text-2xl prose-h3:text-xl
+    prose-p:leading-relaxed prose-p:text-ink-800 dark:prose-invert dark:prose-p:text-ink-100
+    prose-a:text-accent-600 prose-a:no-underline hover:prose-a:underline
+    prose-img:rounded-xl2 prose-img:shadow-soft
+    focus:outline-none;
+}
+
+.ProseMirror {
+  min-height: 60vh;
+  outline: none;
+  caret-color: theme("colors.accent.500");
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  @apply text-ink-300 dark:text-ink-600;
+}
+
+.ProseMirror .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  @apply text-ink-300 dark:text-ink-600;
+}
+
+.ProseMirror ::selection {
+  background: rgba(59, 108, 244, 0.18);
+}
+
+/* drag handle spacing for nodes */
+.ProseMirror > * + * {
+  margin-top: 0.85em;
+}
+
+/* Code blocks */
+.ProseMirror pre {
+  @apply rounded-xl2 bg-ink-900 text-ink-50 dark:bg-black;
+  padding: 1rem 1.1rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+.ProseMirror pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+.ProseMirror code {
+  @apply rounded bg-ink-100 px-1.5 py-0.5 text-[0.85em] text-accent-700 dark:bg-ink-800 dark:text-accent-300;
+}
+
+/* Blockquote */
+.ProseMirror blockquote {
+  @apply border-l-4 border-accent-300 pl-4 italic text-ink-600 dark:border-accent-700 dark:text-ink-300;
+}
+
+/* Tables */
+.ProseMirror table {
+  @apply w-full border-collapse overflow-hidden rounded-xl2;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  @apply border border-ink-200 p-2 align-top dark:border-ink-700;
+}
+
+.ProseMirror th {
+  @apply bg-ink-100 text-left font-semibold dark:bg-ink-800;
+}
+
+.ProseMirror .selectedCell {
+  background: rgba(59, 108, 244, 0.1);
+}
+
+/* Highlight mark */
+.ProseMirror mark {
+  @apply rounded px-0.5;
+  background: #fde68a;
+}
+
+/* Callout node */
+.editor-callout {
+  @apply flex gap-3 rounded-xl2 border border-accent-200 bg-accent-50 p-4 dark:border-accent-800 dark:bg-accent-900/20;
+}
+
+.editor-callout[data-tone="info"] {
+  @apply border-accent-200 bg-accent-50 dark:border-accent-800 dark:bg-accent-900/20;
+}
+
+.editor-callout[data-tone="warning"] {
+  @apply border-warn-400/40 bg-warn-50 dark:bg-warn-400/10;
+}
+
+/* Medical warning node */
+.editor-medical-warning {
+  @apply flex gap-3 rounded-xl2 border border-medical-400/40 bg-medical-50 p-4 dark:border-medical-700 dark:bg-medical-700/10;
+}
+
+.editor-callout-icon {
+  font-size: 1.15rem;
+  line-height: 1.6rem;
+}
+
+.editor-callout-body > *:first-child {
+  margin-top: 0;
+}
+
+.editor-node-label {
+  @apply text-xs font-semibold uppercase tracking-wide text-ink-400;
+}
+
+/* Task list */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 0.3rem;
+  user-select: none;
+}
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div > p {
+  @apply text-ink-400 line-through;
+}
+
+/* Divider (horizontal rule) */
+.ProseMirror hr {
+  @apply my-8 border-t-2 border-ink-100 dark:border-ink-800;
+}
+
+/* Scrollbar for toolbar */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-ink-200 dark:bg-ink-700;
+}
