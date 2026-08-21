@@ -25,6 +25,9 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string | null;
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
 }
 
 export interface PostDraftInput {
@@ -34,6 +37,11 @@ export interface PostDraftInput {
   contentHtml?: string;
   excerpt?: string;
   coverImageUrl?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  categoryIds?: string[];
+  tagIds?: string[];
 }
 
 export type SaveState = "idle" | "saving" | "saved" | "error";

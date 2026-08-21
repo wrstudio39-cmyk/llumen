@@ -29,6 +29,7 @@ import {
   Send,
   CalendarClock,
   Save,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SaveState } from "@/types/post";
@@ -42,6 +43,7 @@ interface ToolbarProps {
   onSaveDraft: () => void;
   onPublish: () => void;
   onSchedule: () => void;
+  onOpenSeo: () => void;
 }
 
 function ToolbarButton({
@@ -107,6 +109,7 @@ export default function Toolbar({
   onSaveDraft,
   onPublish,
   onSchedule,
+  onOpenSeo,
 }: ToolbarProps) {
   const [imageOpen, setImageOpen] = useState(false);
 
@@ -268,6 +271,13 @@ export default function Toolbar({
           {status}
         </span>
         <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenSeo}
+            className="flex items-center gap-1.5 rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50 dark:border-ink-700 dark:text-ink-200 dark:hover:bg-ink-800"
+          >
+            <Search size={14} />
+            SEO & metadata
+          </button>
           <button
             onClick={onSaveDraft}
             className="flex items-center gap-1.5 rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-50 dark:border-ink-700 dark:text-ink-200 dark:hover:bg-ink-800"

@@ -1,4 +1,4 @@
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabaseServer";
+import { createPublicSupabase, isSupabaseConfigured } from "@/lib/supabaseServer";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -173,7 +173,7 @@ const DEMO_POSTS: PublicPost[] = [
 
 export async function getPublishedPosts(limit = 50): Promise<PublicPost[]> {
   if (!isSupabaseConfigured) return DEMO_POSTS;
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECT)
@@ -186,7 +186,7 @@ export async function getPublishedPosts(limit = 50): Promise<PublicPost[]> {
 
 export async function getPostBySlug(slug: string): Promise<PublicPost | null> {
   if (!isSupabaseConfigured) return DEMO_POSTS.find((p) => p.slug === slug) ?? null;
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECT)
@@ -204,7 +204,7 @@ export async function getRelatedPosts(post: PublicPost, limit = 3): Promise<Publ
     const all = await getPublishedPosts(limit + 1);
     return all.filter((p) => p.slug !== post.slug).slice(0, limit);
   }
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECT)
@@ -221,7 +221,7 @@ export async function getRelatedPosts(post: PublicPost, limit = 3): Promise<Publ
 export async function getCategories(): Promise<PublicCategory[]> {
   if (!isSupabaseConfigured)
     return [{ id: "c1", name: "Reproductive Health", slug: "reproductive-health", description: null }];
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase.from("categories").select("id, name, slug, description").order("name");
   if (error || !data) return [];
   return data;
@@ -239,7 +239,7 @@ export async function getPostsByCategory(slug: string): Promise<PublicPost[]> {
 
 export async function getTags(): Promise<PublicTag[]> {
   if (!isSupabaseConfigured) return [{ id: "t1", name: "Beginner Guide", slug: "beginner-guide" }];
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase.from("tags").select("id, name, slug").order("name");
   if (error || !data) return [];
   return data;
@@ -257,7 +257,7 @@ export async function getPostsByTag(slug: string): Promise<PublicPost[]> {
 
 export async function getApprovedComments(postId: string): Promise<PublicComment[]> {
   if (!isSupabaseConfigured) return [];
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase
     .from("comments")
     .select("id, post_id, parent_id, author_name, content, created_at")
@@ -283,7 +283,7 @@ export function estimateWordCount(html: string | null): number {
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   if (!isSupabaseConfigured) return DEFAULT_SETTINGS;
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase
     .from("site_settings")
     .select(
@@ -314,7 +314,7 @@ export async function getAuthorById(id: string): Promise<AuthorProfile | null> {
       ? { id: "demo", name: "Dr. Amara Osei", title: "Board-certified OB-GYN", bio: "Board-certified OB-GYN with a decade of clinical practice, writing to close the gap between the exam room and everyday life.", avatarUrl: null, twitterUrl: null, websiteUrl: null }
       : null;
   }
-  const supabase = await createServerSupabase();
+  const supabase = createPublicSupabase();
   const { data, error } = await supabase
     .from("profiles")
     .select("id, name, title, bio, avatar_url, twitter_url, website_url")

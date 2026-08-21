@@ -9,6 +9,25 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 /**
+ * Public, cookie-free client — used for anonymous reads on the public
+ * site (published posts, categories, site settings, etc). Unlike
+ * createServerSupabase(), this never touches next/headers cookies, which
+ * means the pages that use it are NOT forced into fully dynamic
+ * (uncached, per-request) rendering. That's what lets the homepage,
+ * article pages, and listings be statically generated / ISR'd instead
+ * of hitting the database on every single page load — the single
+ * biggest lever for public-site load speed in this app.
+ *
+ * Never use this where the result should depend on who's logged in —
+ * it always queries as anon, so RLS only ever returns public rows.
+ */
+export function createPublicSupabase() {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+/**
  * Session-aware server client — reads the caller's auth cookies, so every
  * query runs AS that user and is subject to the RLS policies in
  * database/011_rls_policies.sql. Use this for almost everything: it's

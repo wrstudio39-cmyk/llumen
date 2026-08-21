@@ -10,8 +10,17 @@ import TableOfContents from "@/components/site/TableOfContents";
 import ShareButtons from "@/components/site/ShareButtons";
 import CommentSection from "@/components/site/CommentSection";
 import Reveal, { RevealGroup, RevealItem } from "@/components/site/Reveal";
-import { getPostBySlug, getRelatedPosts, getApprovedComments } from "@/lib/publicData";
+import { getPostBySlug, getRelatedPosts, getApprovedComments, getPublishedPosts } from "@/lib/publicData";
 import { buildTableOfContents } from "@/lib/toc";
+
+export const revalidate = 3600; // 1 hour
+
+// Pre-render every published post at build time for instant, cached
+// page loads; new posts published later still work via ISR fallback.
+export async function generateStaticParams() {
+  const posts = await getPublishedPosts(500);
+  return posts.map((post) => ({ slug: post.slug }));
+}
 
 interface Props {
   params: Promise<{ slug: string }>;

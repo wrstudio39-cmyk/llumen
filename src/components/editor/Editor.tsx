@@ -7,6 +7,7 @@ import { ImageIcon, X } from "lucide-react";
 import { getExtensions } from "./extensions";
 import Toolbar from "./Toolbar";
 import EditorBubbleMenu from "./BubbleMenu";
+import SeoPanel from "./SeoPanel";
 import { cn, debounce, extractPlainText, generateSlug, calculateReadingTime } from "@/lib/utils";
 import {
   autosavePost,
@@ -32,15 +33,27 @@ export default function Editor({ post, onPostChange }: EditorProps) {
   const [slug, setSlug] = useState(post?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(post?.slug));
   const [coverImageUrl, setCoverImageUrl] = useState(post?.coverImageUrl ?? "");
+  const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
+  const [metaTitle, setMetaTitle] = useState(post?.metaTitle ?? "");
+  const [metaDescription, setMetaDescription] = useState(post?.metaDescription ?? "");
+  const [categoryIds, setCategoryIds] = useState<string[]>(post?.categoryIds ?? []);
+  const [tagIds, setTagIds] = useState<string[]>(post?.tagIds ?? []);
+  const [seoOpen, setSeoOpen] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [wordCount, setWordCount] = useState(0);
 
   const titleRef = useRef(title);
   const slugRef = useRef(slug);
   const coverRef = useRef(coverImageUrl);
+  const excerptRef = useRef(excerpt);
+  const metaTitleRef = useRef(metaTitle);
+  const metaDescriptionRef = useRef(metaDescription);
   titleRef.current = title;
   slugRef.current = slug;
   coverRef.current = coverImageUrl;
+  excerptRef.current = excerpt;
+  metaTitleRef.current = metaTitle;
+  metaDescriptionRef.current = metaDescription;
 
   const editor = useEditor({
     extensions: getExtensions(),
@@ -80,6 +93,9 @@ export default function Editor({ post, onPostChange }: EditorProps) {
           content,
           contentHtml: html,
           coverImageUrl: coverRef.current || undefined,
+          excerpt: excerptRef.current || undefined,
+          metaTitle: metaTitleRef.current || undefined,
+          metaDescription: metaDescriptionRef.current || undefined,
         });
         setPostId(created.id);
         onPostChange?.(created);
@@ -90,6 +106,9 @@ export default function Editor({ post, onPostChange }: EditorProps) {
           content,
           contentHtml: html,
           coverImageUrl: coverRef.current || undefined,
+          excerpt: excerptRef.current || undefined,
+          metaTitle: metaTitleRef.current || undefined,
+          metaDescription: metaDescriptionRef.current || undefined,
         });
         onPostChange?.(updated);
       }
@@ -103,12 +122,12 @@ export default function Editor({ post, onPostChange }: EditorProps) {
 
   const queueAutosave = useMemo(() => debounce(performAutosave, 800), [performAutosave]);
 
-  // Autosave when title/slug/cover change too (not just content).
+  // Autosave when title/slug/cover/SEO fields change too (not just content).
   useEffect(() => {
     if (!editor) return;
     queueAutosave(editor.getJSON());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, slug, coverImageUrl]);
+  }, [title, slug, coverImageUrl, excerpt, metaTitle, metaDescription]);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
@@ -141,6 +160,9 @@ export default function Editor({ post, onPostChange }: EditorProps) {
         content: editor.getJSON(),
         contentHtml: editor.getHTML(),
         coverImageUrl: coverRef.current || undefined,
+        excerpt: excerptRef.current || undefined,
+        metaTitle: metaTitleRef.current || undefined,
+        metaDescription: metaDescriptionRef.current || undefined,
       });
       onPostChange?.(updated);
       setSaveState("saved");
@@ -176,6 +198,39 @@ export default function Editor({ post, onPostChange }: EditorProps) {
     }
   };
 
+  const handleSeoChange = async (patch: {
+    excerpt?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    categoryIds?: string[];
+    tagIds?: string[];
+  }) => {
+    if (patch.excerpt !== undefined) setExcerpt(patch.excerpt);
+    if (patch.metaTitle !== undefined) setMetaTitle(patch.metaTitle);
+    if (patch.metaDescription !== undefined) setMetaDescription(patch.metaDescription);
+
+    // Category/tag toggles write immediately (relational, not part of the
+    // debounced content autosave) so the picker feels instant.
+    if (patch.categoryIds !== undefined || patch.tagIds !== undefined) {
+      const nextCategoryIds = patch.categoryIds ?? categoryIds;
+      const nextTagIds = patch.tagIds ?? tagIds;
+      setCategoryIds(nextCategoryIds);
+      setTagIds(nextTagIds);
+      try {
+        const id = await ensureSaved();
+        await autosavePost(id, {
+          title: titleRef.current || "Untitled",
+          slug: slugRef.current || generateSlug(titleRef.current || "untitled"),
+          content: editor?.getJSON() ?? null,
+          categoryIds: nextCategoryIds,
+          tagIds: nextTagIds,
+        });
+      } catch (err) {
+        console.error("Failed to save categories/tags", err);
+      }
+    }
+  };
+
   if (!editor) {
     return (
       <div className="flex h-[60vh] items-center justify-center text-sm text-ink-400">
@@ -195,6 +250,20 @@ export default function Editor({ post, onPostChange }: EditorProps) {
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublish}
         onSchedule={handleSchedule}
+        onOpenSeo={() => setSeoOpen(true)}
+      />
+
+      <SeoPanel
+        open={seoOpen}
+        onClose={() => setSeoOpen(false)}
+        postId={postId}
+        title={title}
+        excerpt={excerpt}
+        metaTitle={metaTitle}
+        metaDescription={metaDescription}
+        categoryIds={categoryIds}
+        tagIds={tagIds}
+        onChange={handleSeoChange}
       />
 
       <div className="flex-1 px-4 pb-32 pt-8 sm:px-0">

@@ -8,6 +8,8 @@ import Reveal, { RevealGroup, RevealItem } from "@/components/site/Reveal";
 import HeroBlob from "@/components/site/HeroBlob";
 import { getAuthorById, getPostsByAuthor } from "@/lib/publicData";
 
+export const revalidate = 3600; // 1 hour
+
 interface Props {
   params: Promise<{ id: string }>;
 }

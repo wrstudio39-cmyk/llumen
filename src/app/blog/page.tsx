@@ -4,6 +4,8 @@ import PostCard from "@/components/site/PostCard";
 import { RevealGroup, RevealItem } from "@/components/site/Reveal";
 import { getPublishedPosts } from "@/lib/publicData";
 
+export const revalidate = 3600; // 1 hour
+
 export const metadata: Metadata = {
   title: "All articles",
   description: "Every article published on Lumen — reproductive health, contraception, and relationships, clearly explained.",

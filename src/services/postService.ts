@@ -54,6 +54,9 @@ function rowToPost(row: Record<string, unknown>): Post {
     createdAt: (row.created_at as string) ?? new Date().toISOString(),
     updatedAt: (row.updated_at as string) ?? new Date().toISOString(),
     publishedAt: (row.published_at as string) ?? null,
+    metaTitle: (row.meta_title as string) ?? undefined,
+    metaDescription: (row.meta_description as string) ?? undefined,
+    canonicalUrl: (row.canonical_url as string) ?? undefined,
   };
 }
 
@@ -93,13 +96,16 @@ export async function createDraft(input: PostDraftInput, authorId = "current-use
     contentHtml: input.contentHtml,
     status: "draft",
     authorId,
-    categoryIds: [],
-    tagIds: [],
+    categoryIds: input.categoryIds ?? [],
+    tagIds: input.tagIds ?? [],
     readingTimeMinutes: calculateReadingTime(plainText),
     scheduledFor: null,
     createdAt: now,
     updatedAt: now,
     publishedAt: null,
+    metaTitle: input.metaTitle,
+    metaDescription: input.metaDescription,
+    canonicalUrl: input.canonicalUrl,
   };
   const posts = readLocalPosts();
   posts[base.id] = base;

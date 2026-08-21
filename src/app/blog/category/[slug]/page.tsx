@@ -3,7 +3,14 @@ import { notFound } from "next/navigation";
 import SiteChrome from "@/components/site/SiteChrome";
 import PostCard from "@/components/site/PostCard";
 import { RevealGroup, RevealItem } from "@/components/site/Reveal";
-import { getCategoryBySlug, getPostsByCategory } from "@/lib/publicData";
+import { getCategoryBySlug, getPostsByCategory, getCategories } from "@/lib/publicData";
+
+export const revalidate = 3600; // 1 hour
+
+export async function generateStaticParams() {
+  const categories = await getCategories();
+  return categories.map((c) => ({ slug: c.slug }));
+}
 
 interface Props {
   params: Promise<{ slug: string }>;

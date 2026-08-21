@@ -122,7 +122,87 @@ Works on any Node ≥18.18 host. Run the cron endpoint on a schedule
 yourself (GitHub Actions, system cron, etc.) since Vercel Cron is
 platform-specific.
 
-## 5. Structure
+## 6. Performance — what changed and why
+
+The public site was previously **fully dynamic**: every page fetched from
+Supabase using a cookie-aware client, which forces Next.js to skip all
+caching and hit the database on every single request. That was the
+main cause of slow loads. Fixed by:
+
+- **A separate cookie-free Supabase client** (`createPublicSupabase()`
+  in `supabaseServer.ts`) for all public reads. Cookie access is what
+  forces a route into fully dynamic rendering — removing it lets
+  Next.js cache these pages properly.
+- **ISR on every public page** (`export const revalidate = 300`) — the
+  homepage, blog index, articles, categories, tags, and author pages
+  are now generated once and served from cache, refreshing in the
+  background at most every hour instead of hitting the database
+  on every visit.
+- **`generateStaticParams`** on articles, categories, and tags — these
+  pre-render at build time for instant first paint; new content still
+  works immediately via ISR fallback.
+- **Self-hosted fonts via `next/font/google`** instead of a `<link>` to
+  Google's CDN — eliminates a render-blocking external request
+  entirely; fonts are bundled at build time.
+- **`optimizePackageImports`** for `lucide-react` and `framer-motion` in
+  `next.config.js` — only the icons/functions actually used ship to
+  the browser instead of the whole library.
+
+Result: `/` and `/blog` build as fully static pages; articles/
+categories/tags are pre-rendered (SSG) with a 1-hour revalidation
+window. Only `/admin/**` stays fully dynamic, which is correct — an
+admin dashboard should never show stale, cached data.
+
+## 7. SEO — what's in place
+
+- Per-page `<title>`/description/canonical via `generateMetadata` on
+  every route, falling back to Site Settings defaults
+- Open Graph + Twitter Card tags on every page type
+- `Organization` + `WebSite` JSON-LD sitewide; `MedicalWebPage` +
+  `BreadcrumbList` JSON-LD per article
+- `sitemap.xml` covering posts, categories, tags, and author pages;
+  `robots.txt` disallowing only `/admin`, `/api`, `/login`
+- Semantic HTML (`<article>`, `<time>`, breadcrumb `<nav>`) and
+  descriptive image `alt` text
+- **Meta title / meta description are now editable per-article** —
+  see "Editor improvements" below
+- Fast, cached pages (see Performance above) — page speed is itself a
+  ranking factor, not just a UX one
+
+## 8. Editor improvements — "SEO & metadata" panel
+
+Every post now has an **SEO & metadata** button in the editor toolbar
+that opens a slide-over panel with:
+
+- A live **Google search result preview** (title + URL + snippet,
+  rendered the way it'll actually look in results)
+- **Meta title** with a 60-character counter and color-coded progress bar
+- **Meta description** with a 160-character counter — this is the
+  single field with the biggest effect on click-through from search
+- **Excerpt** (shown on cards/listings, separate from the meta description)
+- **Category and tag pickers** — click to assign, saved instantly,
+  properly wired end-to-end (previously present in the data model but
+  never actually connected to the editor UI or API)
+
+## 9. Before you go live — checklist
+
+1. **Site Settings** (`/admin/site-settings`) — replace the placeholder
+   site name, hero copy, footer text, contact email, and social links
+   with your real ones. Everything there is a placeholder until you
+   edit it.
+2. **`NEXT_PUBLIC_SITE_URL`** in your Vercel environment variables —
+   set to your real domain (see the warning comment in `.env.local`).
+   This feeds the sitemap, canonical URLs, and every social share tag.
+3. **Your author profile** (`/admin/settings`) — real name, title,
+   bio, social links. This is your public byline on every article.
+4. Give every article a **meta description** via the SEO panel before
+   publishing — Google can technically index without one, but it'll
+   write its own (often poorly) if you don't.
+5. Submit your sitemap (`yourdomain.com/sitemap.xml`) to Google Search
+   Console and Bing Webmaster Tools once live — this is what actually
+   gets new content crawled quickly rather than waiting on discovery.
+
+## 10. Structure
 
 ```
 src/
