@@ -8,9 +8,9 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, BookOpen, Users } from "lucide-react";
 
 // Statically generated, then refreshed in the background at most every
-// hour — new posts show up without every visitor paying the cost of a
+// day — new posts show up without every visitor paying the cost of a
 // live database round trip.
-export const revalidate = 3600; // 1 hour
+export const revalidate = 86400; // 1 day
 
 export default async function HomePage() {
   const [posts, categories, settings] = await Promise.all([

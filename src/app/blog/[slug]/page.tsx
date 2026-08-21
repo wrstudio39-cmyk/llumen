@@ -13,7 +13,7 @@ import Reveal, { RevealGroup, RevealItem } from "@/components/site/Reveal";
 import { getPostBySlug, getRelatedPosts, getApprovedComments, getPublishedPosts } from "@/lib/publicData";
 import { buildTableOfContents } from "@/lib/toc";
 
-export const revalidate = 3600; // 1 hour
+export const revalidate = 86400; // 1 day
 
 // Pre-render every published post at build time for instant, cached
 // page loads; new posts published later still work via ISR fallback.

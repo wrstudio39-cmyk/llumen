@@ -5,7 +5,7 @@ import PostCard from "@/components/site/PostCard";
 import { RevealGroup, RevealItem } from "@/components/site/Reveal";
 import { getCategoryBySlug, getPostsByCategory, getCategories } from "@/lib/publicData";
 
-export const revalidate = 3600; // 1 hour
+export const revalidate = 86400; // 1 day
 
 export async function generateStaticParams() {
   const categories = await getCategories();
