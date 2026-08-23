@@ -1,5 +1,13 @@
 import type { MetadataRoute } from "next";
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabaseServer";
+import { createPublicSupabase, isSupabaseConfigured } from "@/lib/supabaseServer";
+
+// Safety-net time-based revalidation. In normal operation this route is
+// invalidated on demand the instant a post is published/unpublished/
+// deleted (see src/lib/seoRevalidate.ts, called from the publish/patch/
+// delete/schedule/cron routes) — this 1-hour window is just a fallback
+// so the sitemap can never drift further than that even if an edge case
+// slips through.
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
@@ -11,7 +19,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   if (!isSupabaseConfigured) return staticRoutes;
 
-  const supabase = await createServerSupabase();
+  // Deliberately the anon/cookie-free client, not createServerSupabase():
+  // this table read is fully public (published posts only — same as the
+  // rest of the public site), and avoiding next/headers cookies here is
+  // what allows this route to be cached/ISR'd instead of re-querying the
+  // database on every single crawler hit. See src/lib/supabaseServer.ts.
+  const supabase = createPublicSupabase();
 
   const [{ data: posts }, { data: categories }, { data: tags }, { data: authors }] = await Promise.all([
     supabase.from("posts").select("slug, updated_at").eq("status", "published"),

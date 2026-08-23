@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceSupabase } from "@/lib/supabaseServer";
+import { getPostSeoRefs, revalidatePostSeo } from "@/lib/seoRevalidate";
 
 /**
  * Called on a schedule (see vercel.json) to flip any post whose
@@ -23,9 +24,18 @@ export async function GET(request: NextRequest) {
     .update({ status: "published", published_at: nowIso, scheduled_for: null })
     .eq("status", "scheduled")
     .lte("scheduled_for", nowIso)
-    .select("id, slug");
+    .select("id, slug, author_id");
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Auto-publishing bypasses the admin "Publish" click, so it needs the
+  // same on-demand revalidation that click would have triggered — see
+  // src/lib/seoRevalidate.ts. Usually 0-1 posts per run (cron runs every
+  // 5 minutes, see vercel.json), so per-post lookups here are cheap.
+  for (const post of data ?? []) {
+    const { categorySlugs, tagSlugs } = await getPostSeoRefs(supabase, post.id);
+    revalidatePostSeo({ slugs: [post.slug], authorId: post.author_id, categorySlugs, tagSlugs });
+  }
 
   return NextResponse.json({ published: data?.length ?? 0, posts: data });
 }

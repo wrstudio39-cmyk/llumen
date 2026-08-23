@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerSupabase } from "@/lib/supabaseServer";
 import { calculateReadingTime, extractPlainText } from "@/lib/utils";
+import { getPostSeoRefs, revalidatePostSeo } from "@/lib/seoRevalidate";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -31,6 +32,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createServerSupabase();
   const body = await request.json();
+
+  // Needed to revalidate the *old* slug/status too, in case this patch
+  // renames the post or unpublishes it (status -> draft) — otherwise the
+  // previous public URL keeps serving stale ISR content for up to an hour.
+  const { data: existing } = await supabase.from("posts").select("slug, status").eq("id", id).single();
 
   const patch: Record<string, unknown> = {};
   if (body.title !== undefined) patch.title = body.title;
@@ -84,6 +90,20 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     supabase.from("post_tags").select("tag_id").eq("post_id", id),
   ]);
 
+  // Any patch could have published, unpublished, renamed (slug), or
+  // recategorized the post — cheapest correct move is to just revalidate
+  // both the old and new public surfaces rather than trying to diff what
+  // actually changed. See src/lib/seoRevalidate.ts.
+  if (existing?.status === "published" || data.status === "published") {
+    const { categorySlugs, tagSlugs } = await getPostSeoRefs(supabase, id);
+    revalidatePostSeo({
+      slugs: [existing?.slug, data.slug],
+      authorId: data.author_id,
+      categorySlugs,
+      tagSlugs,
+    });
+  }
+
   return NextResponse.json({
     post: {
       ...data,
@@ -97,8 +117,21 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
   const supabase = await createServerSupabase();
 
+  // Fetch the public-facing details before the row is gone, so a
+  // previously-published article can be de-listed (sitemap, listings,
+  // category/tag pages) immediately instead of 404ing only after the
+  // next ISR window.
+  const { data: existing } = await supabase.from("posts").select("slug, status, author_id").eq("id", id).single();
+  const { categorySlugs, tagSlugs } = existing?.status === "published"
+    ? await getPostSeoRefs(supabase, id)
+    : { categorySlugs: [], tagSlugs: [] };
+
   const { error } = await supabase.from("posts").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  if (existing?.status === "published") {
+    revalidatePostSeo({ slugs: [existing.slug], authorId: existing.author_id, categorySlugs, tagSlugs });
+  }
 
   return NextResponse.json({ ok: true });
 }

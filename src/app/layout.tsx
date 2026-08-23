@@ -70,11 +70,12 @@ export default async function RootLayout({
     "@type": "WebSite",
     name: settings.siteName,
     url: siteUrl,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${siteUrl}/blog?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
+    // No SearchAction here: the site doesn't have a working `/blog?q=`
+    // search endpoint, and Google explicitly recommends against
+    // declaring a sitelinks searchbox action for a search feature that
+    // doesn't actually exist — it renders in Search Console as valid
+    // structured data but degrades trust/CTR if it doesn't work. Add it
+    // back if a real search page ever ships.
   };
 
   return (

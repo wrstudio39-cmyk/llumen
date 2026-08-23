@@ -10,7 +10,7 @@ import TableOfContents from "@/components/site/TableOfContents";
 import ShareButtons from "@/components/site/ShareButtons";
 import CommentSection from "@/components/site/CommentSection";
 import Reveal, { RevealGroup, RevealItem } from "@/components/site/Reveal";
-import { getPostBySlug, getRelatedPosts, getApprovedComments, getPublishedPosts } from "@/lib/publicData";
+import { getPostBySlug, getRelatedPosts, getApprovedComments, getPublishedPosts, getSiteSettings } from "@/lib/publicData";
 import { buildTableOfContents } from "@/lib/toc";
 
 export const revalidate = 3600; // 1 hour
@@ -70,7 +70,11 @@ export default async function ArticlePage({ params }: Props) {
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  const [related, comments] = await Promise.all([getRelatedPosts(post), getApprovedComments(post.id)]);
+  const [related, comments, settings] = await Promise.all([
+    getRelatedPosts(post),
+    getApprovedComments(post.id),
+    getSiteSettings(),
+  ]);
   const { html, headings } = buildTableOfContents(post.contentHtml);
   const articleUrl = `${siteUrl}/blog/${post.slug}`;
 
@@ -85,7 +89,14 @@ export default async function ArticlePage({ params }: Props) {
     url: articleUrl,
     mainEntityOfPage: articleUrl,
     author: post.author ? { "@type": "Person", name: post.author.name, url: `${siteUrl}/author/${post.author.id}` } : undefined,
-    publisher: { "@type": "Organization", name: "Lumen" },
+    // Driven by Site settings (site_name / og_image_url) rather than a
+    // hardcoded name, so renaming the site from the admin dashboard stays
+    // consistent with every article's structured data.
+    publisher: {
+      "@type": "Organization",
+      name: settings.siteName,
+      ...(settings.ogImageUrl ? { logo: { "@type": "ImageObject", url: settings.ogImageUrl } } : {}),
+    },
   };
 
   const breadcrumbLd = {
@@ -145,7 +156,7 @@ export default async function ArticlePage({ params }: Props) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-ink-800 hover:text-accent-600 dark:text-ink-100">
-                  {post.author?.name ?? "Lumen Editorial"}
+                  {post.author?.name ?? `${settings.siteName} Editorial`}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-ink-400">
                   <span className="flex items-center gap-1"><Calendar size={12} /> {formatDate(post.publishedAt)}</span>
