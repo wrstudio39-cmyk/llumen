@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, FileText, PlusCircle, Settings, MessageCircle, Globe, SlidersHorizontal, ShieldCheck, Users } from "lucide-react";
+import { LayoutDashboard, FileText, PlusCircle, Settings, MessageCircle, Globe, SlidersHorizontal, ShieldCheck, Users, FolderKanban } from "lucide-react";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabaseServer";
 
 async function getCurrentRole(): Promise<string | null> {
@@ -22,6 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard, show: true },
     { href: "/admin/articles", label: "Articles", icon: FileText, show: true },
     { href: "/admin/new-post", label: "New post", icon: PlusCircle, show: true },
+    { href: "/admin/categories", label: "Categories & tags", icon: FolderKanban, show: isStaff },
     { href: "/admin/comments", label: "Comments", icon: MessageCircle, show: isStaff },
     { href: "/admin/staff", label: "Staff", icon: Users, show: isAdmin },
     { href: "/admin/site-settings", label: "Site settings", icon: SlidersHorizontal, show: isAdmin },

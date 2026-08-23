@@ -4,7 +4,7 @@ import PostCard from "@/components/site/PostCard";
 import { RevealGroup, RevealItem } from "@/components/site/Reveal";
 import { getPublishedPosts } from "@/lib/publicData";
 
-export const revalidate = 86400; // 1 day
+export const revalidate = 3600; // 1 hour
 
 export const metadata: Metadata = {
   title: "All articles",

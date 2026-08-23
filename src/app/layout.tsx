@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mon
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-export const revalidate = 86400; // 1 day
+export const revalidate = 3600; // 1 hour
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
